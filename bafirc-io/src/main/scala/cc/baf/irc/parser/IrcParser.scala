@@ -2,7 +2,6 @@ package cc.baf.irc
 package parser
 
 import org.parboiled.scala._
-import java.lang.String
 import org.parboiled.errors._
 
 import scala.util.Try
@@ -67,29 +66,4 @@ class IrcParser extends Parser {
 	}
 
 	def tryParseMessage(message: String) = Try { parseMessage(message) }
-}
-
-object test {
-	def main(args: Array[String]) {
-		val parser = new IrcParser()
-
-		println(parser.tryParseMessage(":BAF!ferrisr@vort PRIVMSG Sevalecan :you suck"))
-		println(parser.tryParseMessage("!BROKEN MESSAGE Sevalecan :you suck"))
-		println(parser.tryParseMessage(":!BROKEN PREFIX Sevalecan :you suck"))
-		println(parser.tryParseMessage(":BAF!ferrisr@vort PRIVMSG"))
-
-		println
-		println
-		println
-		import cc.baf.irc.data.Messages
-
-		for {
-			parsed <- parser.tryParseMessage(":BAF!ferrisr@vort PRIVMSG Sevalecan :you suck")
-		} {
-			parsed match {
-				case Messages.PrivMsg(Some(prefix), target :: Nil, message) =>
-					println(s"${prefix.nick} tells $target: $message")
-			}
-		}
-	}
 }
