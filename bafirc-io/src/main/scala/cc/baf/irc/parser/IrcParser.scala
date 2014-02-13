@@ -23,7 +23,7 @@ class IrcParser extends Parser {
 	}
 
 	def Prefix: Rule1[DPrefix] = rule { NickPrefix | ServerNamePrefix }
-	def ServerNamePrefix = rule { ServerName ~> { name: String => DPrefix(name, None, None) } }
+	def ServerNamePrefix = rule { Host ~> { name: String => DPrefix(name, None, None) } }
 	def NickPrefix = rule { Nick ~> identity ~ optional("!" ~ User ~> identity) ~ optional("@" ~ Host ~> identity) ~~> DPrefix }
 
 	def Command = rule { oneOrMore(Letter) | nTimes(3, Number) }
@@ -38,17 +38,9 @@ class IrcParser extends Parser {
 	def MiddleParam = rule { noneOf(":\0\r\n ") ~ zeroOrMore(noneOf("\0\r\n ")) }
 	def TrailingParam = rule { zeroOrMore(noneOf("\0\r\n")) }
 
-	def Target = rule { oneOrMore(To, separator = ",") }
-
-	def To = rule { Channel | (User ~ "@" ~ ServerName) | Nick | Mask }
-	def Channel = rule { anyOf("#&") ~ ChString }
-	def ServerName = rule { Host }
-
 	def Nick = rule { Letter ~ zeroOrMore(Letter | Number | Special) }
 	def User = rule { oneOrMore(noneOf(" @\0\r\n")) }
 	def Host = rule { (Letter | Number | "-") ~ zeroOrMore(Letter | Number | "-" | ".") }
-	def ChString = rule { noneOf(" \b\0\r\n,") }
-	def Mask = rule { ("#" | "$") ~ ChString }
 
 	def Letter = rule { "a" - "z" | "A" - "Z" }
 	def Number = rule { "0" - "9" }
