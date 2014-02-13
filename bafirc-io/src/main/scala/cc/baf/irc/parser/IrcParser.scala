@@ -8,6 +8,8 @@ import scala.util.Try
 
 import cc.baf.irc.data.{ Prefix => DPrefix, Message => DMessage}
 
+class IrcParserException(message: String) extends Exception(message)
+
 /**
  * Parser for IRC messages, as defined by RFC1459. Not thread safe (use one instance per thread).
  *
@@ -16,7 +18,7 @@ import cc.baf.irc.data.{ Prefix => DPrefix, Message => DMessage}
 class IrcParser extends Parser {
 	def IrcMessage = rule {
 		optional(":" ~ Prefix ~ Space) ~ Command ~> identity ~ Params ~> identity ~ optional(CrLf) ~ EOI ~~> { (prefix: Option[DPrefix], command: String, params: List[String], _: String) =>
-			DMessage(prefix, command, params)
+			DMessage(prefix, command.toUpperCase, params)
 		}
 	}
 
@@ -26,7 +28,7 @@ class IrcParser extends Parser {
 
 	def Command = rule { oneOrMore(Letter) | nTimes(3, Number) }
 	def Params = rule {
-		Space ~ zeroOrMore(MiddleParam ~> identity, separator = Space) ~ optional(Space ~ ":" ~ TrailingParam ~> identity) ~~> { (middles: List[String], trailing: Option[String]) =>
+		zeroOrMore(Space ~ MiddleParam ~> identity) ~ optional(Space ~ ":" ~ TrailingParam ~> identity) ~~> { (middles: List[String], trailing: Option[String]) =>
 			trailing match {
 				case Some(trailing) => middles ++ (trailing :: Nil)
 				case None => middles
@@ -61,7 +63,7 @@ class IrcParser extends Parser {
 		val result = parser.run(message)
 		result.result match {
 			case Some(msg) => msg
-			case None => throw new ParsingException(s"Invalid IRC Message:\n${ErrorUtils.printParseErrors(result)}")
+			case None => throw new IrcParserException(s"Invalid IRC Message:\n${ErrorUtils.printParseErrors(result)}")
 		}
 	}
 
