@@ -66,7 +66,7 @@ class IrcParser extends Parser {
 		}
 	}
 
-	def tryParseMessage(message: String) = Try { parseMessage(message)}
+	def tryParseMessage(message: String) = Try { parseMessage(message) }
 }
 
 object test {

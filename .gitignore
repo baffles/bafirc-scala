@@ -15,8 +15,3 @@ project/plugins/project/
 # Scala-IDE specific
 .scala_dependencies
 .worksheet
-
-# IntelliJ IDEA specific
-*.iws
-.idea/workspace.xml
-.idea/tasks.xml
