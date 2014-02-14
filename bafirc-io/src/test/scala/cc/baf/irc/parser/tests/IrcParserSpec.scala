@@ -114,5 +114,11 @@ class IrcParserSpec extends FunSpec with Matchers {
 			threeSpacesBeforeTrailing.command shouldEqual "COMMAND"
 			threeSpacesBeforeTrailing.params shouldEqual "param" :: Nil
 		}
+
+		it("should handle commands without parameters properly") {
+			val noParams = parseSuccess("QUIT")
+			noParams.command shouldEqual "QUIT"
+			noParams.params shouldEqual Nil
+		}
 	}
 }
