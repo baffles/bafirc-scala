@@ -2,7 +2,7 @@ import sbt._
 import Keys._
 
 object BuildDef extends Build {
-	lazy val bafirc_io = Project("bafirc-io", file("bafirc-io"))
+	lazy val bafirc_comm = Project("bafirc-comm", file("bafirc-comm"))
 		.settings(
 	    	organization := "cc.baf",
 			version := "1.0",
