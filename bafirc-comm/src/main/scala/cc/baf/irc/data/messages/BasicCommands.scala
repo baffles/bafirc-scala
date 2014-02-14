@@ -17,7 +17,7 @@ object Nick {
 }
 
 object User {
-	def apply(username: String, mode: String, realname: String) = Message("USER", username, mode, "*", realname)
+	def apply(username: String, mode: Int, realname: String) = Message("USER", username, mode.toString, "*", realname)
 }
 
 object Oper {
