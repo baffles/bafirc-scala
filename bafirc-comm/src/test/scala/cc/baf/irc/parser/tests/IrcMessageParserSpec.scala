@@ -7,9 +7,9 @@ import org.scalatest._
 import cc.baf.irc.data._
 import cc.baf.irc.parser._
 
-class IrcParserSpec extends FunSpec with Matchers {
+class IrcMessageParserSpec extends FunSpec with Matchers {
 
-	private lazy val parser = new IrcParser()
+	private lazy val parser = new IrcMessageParser()
 	
 	private def parseSuccess(message: String) = {
 		parser.tryParseMessage(message) match {
@@ -31,6 +31,16 @@ class IrcParserSpec extends FunSpec with Matchers {
 
 			val nickHostOnly = parseSuccess(":nick@host COMMAND param1 param2 :param3")
 			nickHostOnly.prefix shouldEqual Some(Prefix("nick", None, Some("host")))
+		}
+
+		it("should handle FreeNode-style cloaked hostnames") {
+			val cloaked = parseSuccess(":nick!user@some/cloaked/hostmask COMMAND param")
+			cloaked.prefix shouldEqual Some(Prefix("nick", Some("user"), Some("some/cloaked/hostmask")))
+		}
+
+		it("should properly parse server hostname prefixes") {
+			val serverName = parseSuccess(":some.server.host COMMAND param")
+			serverName.prefix shouldEqual Some(Prefix("some.server.host", None, None))
 		}
 
 		it("shouldn't fail on messages with no prefix") {

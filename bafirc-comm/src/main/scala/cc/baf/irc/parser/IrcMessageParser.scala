@@ -15,16 +15,14 @@ class IrcParserException(message: String) extends Exception(message)
  *
  * @author robertf
  */
-class IrcParser extends Parser {
+class IrcMessageParser extends Parser {
 	def IrcMessage = rule {
 		optional(":" ~ Prefix ~ Space) ~ Command ~> identity ~ Params ~> identity ~ optional(CrLf) ~ EOI ~~> { (prefix: Option[DPrefix], command: String, params: List[String], _: String) =>
 			DMessage(prefix, command.toUpperCase, params)
 		}
 	}
 
-	def Prefix: Rule1[DPrefix] = rule { NickPrefix | ServerNamePrefix }
-	def ServerNamePrefix = rule { Host ~> { name: String => DPrefix(name, None, None) } }
-	def NickPrefix = rule { Nick ~> identity ~ optional("!" ~ User ~> identity) ~ optional("@" ~ Host ~> identity) ~~> DPrefix }
+	def Prefix = rule { NickOrHost ~> identity ~ optional("!" ~ User ~> identity) ~ optional("@" ~ Host ~> identity) ~~> DPrefix }
 
 	def Command = rule { oneOrMore(Letter) | nTimes(3, Number) }
 	def Params = rule {
@@ -38,9 +36,10 @@ class IrcParser extends Parser {
 	def MiddleParam = rule { noneOf(":\0\r\n ") ~ zeroOrMore(noneOf("\0\r\n ")) }
 	def TrailingParam = rule { zeroOrMore(noneOf("\0\r\n")) }
 
+	def NickOrHost = rule { Letter ~ zeroOrMore(Letter | Number | Special | ".") }
 	def Nick = rule { Letter ~ zeroOrMore(Letter | Number | Special) }
 	def User = rule { oneOrMore(noneOf(" @\0\r\n")) }
-	def Host = rule { (Letter | Number | "-") ~ zeroOrMore(Letter | Number | "-" | ".") }
+	def Host = rule { oneOrMore(noneOf(" @\0\r\n")) }
 
 	def Letter = rule { "a" - "z" | "A" - "Z" }
 	def Number = rule { "0" - "9" }
