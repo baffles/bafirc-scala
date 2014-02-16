@@ -10,19 +10,14 @@ import akka.util._
 
 /**
  * akka-io pipeline stage for message frames. It will assemble complete messages from an incoming byte stream with the
- * given `delimiters` and `charset`.
- *
- * This implementation is geared toward handling IRC messages, so the default parameters match those laid out in the
- * IRC spec, but they can easily be changed.
- *
- * Message length (by default) is limited to 512 bytes after delimitation (as per RFC-1459, section 2.3). RFC specifies
- * ASCII, though we default to UTF-8 encoding.
+ * given `delimiters` and `charset`. Any single item from `delimiters` is accepted, and empty messages are silently
+ * thrown away. Strings are decoded using `charset`.
  *
  * @author robertf
  */
 private[io] class MessageFraming(
-		maxSize: Int = 512,
-		charset: String = "UTF-8",
+		maxSize: Int,
+		charset: String,
 		delimiters: List[Byte] = List[Byte]('\r', '\n')
 	) extends SymmetricPipelineStage[PipelineContext, String, ByteString] {
 
@@ -39,6 +34,7 @@ private[io] class MessageFraming(
 				if (bs.isEmpty) None -> acc
 				else {
 					val delim = bs.indexWhere { delimiters contains _ }
+					require(delim - 1 < maxSize, s"message > $maxSize bytes detected")
 					if (delim >= 0) {
 						// we have at least one message... slice it out and get the remainder
 						val messageRaw = bs.slice(0, delim)
@@ -62,8 +58,8 @@ private[io] class MessageFraming(
 		/** Pipeline for sending messages. Silently drops messages that are greater than `maxSize`. */
 		def commandPipeline = { message: String =>
 			val messageEncoded = ByteString(message, charset) ++ delimitersBS
-			if (messageEncoded.length > maxSize) Seq()
-			else context.singleCommand(messageEncoded)
+			if (messageEncoded.length > maxSize) Nil
+			else context singleCommand messageEncoded
 		}
 
 		/** Pipeline for receiving messages. Throws if an incoming message is greater than `maxSize`. */
@@ -72,9 +68,12 @@ private[io] class MessageFraming(
 			val (newBuffer, messages) = extractMessages(data)
 			buffer = newBuffer
 
+			// require that after extraction, we aren't working on gathering a message that's bigger than `maxSize`
+			for (buffer <- buffer) require(buffer.length < maxSize, s"message > $maxSize bytes detected")
+
 			messages match {
 				case Nil => Nil
-				case one :: Nil => context.singleEvent(one)
+				case one :: Nil => context singleEvent one
 				case many => many map { Left(_) }
 			}
 		}

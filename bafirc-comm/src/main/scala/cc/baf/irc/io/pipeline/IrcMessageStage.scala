@@ -19,12 +19,12 @@ private[io] class IrcMessageStage extends SymmetricPipelineStage[PipelineContext
 
 		def commandPipeline = { message: Message =>
 			println(s"-> $message")
-			context.singleCommand(message.toIrc)
+			context singleCommand message.toIrc
 		}
 
 		/** Pipeline for receiving messages. Throws if an incoming message is greater than `maxSize`. */
 		def eventPipeline = { message: String =>
-			context.singleEvent(parser parseMessage message)
+			context singleEvent (parser parseMessage message)
 		}
 	}
 }
