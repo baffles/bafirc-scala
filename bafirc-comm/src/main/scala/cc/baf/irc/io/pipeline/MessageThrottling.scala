@@ -19,7 +19,8 @@ import cc.baf.irc.util.MessagePriorityProvider
  * Provides throttling/flood control, as described in RFC 1459, section 8.10.
  *
  * Management messages are used, as defined in io.Irc, to both notify upstream of the send queue status, and also to
- * allow consumers to forcefully flush the queue. Messages are ordered in priority by the implicit Ordering[Message].
+ * allow consumers to forcefully flush the queue. Messages are ordered in priority by the implicit Ordering[Message]
+ * and are then prioritized chronologically.
  *
  * @param enabled whether throttling is enabled
  * @param penalty the penalty per message, in ms
@@ -34,10 +35,26 @@ private[io] class MessageThrottling(
 		window: Long
 	)(implicit priority: Ordering[Message]) extends SymmetricPipelineStage[HasActorContext, Message, Message] {
 
+	private case class QueuedMessage(seq: Int, message: Message)
+	private implicit val ord = {
+		implicit val seqOrdering: Ordering[Int] = Ordering.Int.reverse
+		Ordering.by[QueuedMessage, (Message, Int)](x => (x.message, x.seq))//(Ordering.Tuple2[Message, Int](priority, Ordering.Int.Reverse))
+	}
+
 	def apply(context: HasActorContext) = new SymmetricPipePair[Message, Message] {
 		private var messageTimer = 0L
 		private var lastActualSend = 0L
-		private val sendQueue = PriorityQueue.empty[Message]
+		private val sendQueue = PriorityQueue.empty[QueuedMessage]
+
+		private object seq {
+			private var seq = 0
+
+			def apply() = {
+				val s = seq
+				seq += 1
+				s
+			}
+		}
 
 		private def sendStats() {
 			val eta = penalty * sendQueue.length
@@ -50,7 +67,7 @@ private[io] class MessageThrottling(
 			val canSend = (System.currentTimeMillis - lastActualSend) / penalty
 			if (canSend >= 1) {
 				// send what we can
-				val toSend = (1 to canSend.toInt).iterator.takeWhile(_ => !sendQueue.isEmpty).map(_ => sendQueue.dequeue).toList
+				val toSend = (1 to canSend.toInt).iterator.takeWhile(_ => !sendQueue.isEmpty).map(_ => sendQueue.dequeue.message).toList
 				doActualSend(toSend)
 			} else {
 				// we can't send anything. no-op
@@ -83,7 +100,7 @@ private[io] class MessageThrottling(
 
 			if (shouldQueue) {
 				// queue message and no-op
-				sendQueue += message
+				sendQueue += QueuedMessage(seq(), message)
 				Nil
 			} else {
 				// otherwise, send it immediately
