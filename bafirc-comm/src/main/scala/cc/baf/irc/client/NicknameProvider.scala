@@ -1,8 +1,6 @@
 package cc.baf.irc
 package client
 
-import collection.mutable.Queue
-
 /**
  * Provides nicknames for use on connect.
  *
@@ -36,6 +34,8 @@ private[client] trait BasicCurrentNick {
  * @author robertf
  */
 class ListNicknameProvider(nicknames: List[String]) extends NicknameProvider with BasicCurrentNick {
+	require(!nicknames.isEmpty, "nicknames must not be empty")
+
 	private val numNicks = nicknames.length
 	private var curNickIdx = 0
 
@@ -64,12 +64,13 @@ class ListNicknameProvider(nicknames: List[String]) extends NicknameProvider wit
 }
 
 /**
- * A NicknameProvider implementation that generates nicknames by gradually incrementing
- * and adding letters/numbers.
+ * A NicknameProvider implementation that generates nicknames by gradually incrementing and adding letters/numbers.
  *
  * @author robertf
  */
 class GeneratedNicknameProvider(initialNick: String) extends NicknameProvider with BasicCurrentNick {
+	require(!initialNick.isEmpty, "initialNick must not be empty")
+
 	private var next = initialNick
 
 	override def currentNick_=(newNick: String) = {
@@ -109,18 +110,5 @@ class GeneratedNicknameProvider(initialNick: String) extends NicknameProvider wi
 		val n = next
 		generateNewNick
 		n
-	}
-}
-
-object test {
-	def main(args: Array[String]) {
-		val blah = new BasicCurrentNick {}
-
-		val pro = new ListNicknameProvider("BAF" :: "Baffles" :: "[BAF]" :: "\\BAF\\" :: Nil)
-
-		pro.currentNick = "test"
-
-		for (i <- 0 to 10)
-			println(pro.nextNick)
 	}
 }
