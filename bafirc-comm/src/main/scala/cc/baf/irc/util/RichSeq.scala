@@ -3,7 +3,7 @@ package util
 
 object RichSeq {
 	/**
-	 * An enriched implicit around Seq providing some missing LINQ features..
+	 * An enriched implicit around Seq providing some missing LINQ features.
 	 *
 	 * @author robertf
 	 */
