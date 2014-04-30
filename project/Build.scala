@@ -10,7 +10,7 @@ object BuildDef extends Build {
 		).settings(
 			resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
 
-			libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.2.3",
+			libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.2.4",
 	    	libraryDependencies += "org.parboiled" %% "parboiled-scala" % "1.1.5",
 
 	    	libraryDependencies += "io.spray" % "spray-util" % "1.2.0",
