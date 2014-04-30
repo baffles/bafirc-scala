@@ -8,8 +8,8 @@ case class Prefix(nick: String, user: Option[String], host: Option[String]) {
 case class Message(prefix: Option[Prefix] = None, command: String, params: List[String]) {
 	private def renderParams(params: List[String]): List[String] = params match {
 		case Nil => Nil
-		case last :: Nil if (last.startsWith(":") || last.contains(" ")) => s":$last" :: Nil
-		case node :: tail if (node.startsWith(":") || node.contains(" ")) => throw new IllegalArgumentException("middle parameter begins with : or contains a space")
+		case last :: Nil if (last.isEmpty || last.startsWith(":") || last.contains(" ")) => s":$last" :: Nil
+		case node :: tail if (node.isEmpty || node.startsWith(":") || node.contains(" ")) => throw new IllegalArgumentException("middle parameter empty, begins with :, or contains a space")
 		case node :: tail => node :: renderParams(tail)
 	}
 

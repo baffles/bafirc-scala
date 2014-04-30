@@ -44,7 +44,7 @@ class MessageSpec extends FunSpec with Matchers {
 				twoParams.toIrc shouldEqual "test p1 p2"
 			}
 
-			it("should render trailing paramters (space) correctly") {
+			it("should render trailing paramters (containing space) correctly") {
 				val msg = Message("test", "trailing param")
 				msg.toIrc shouldEqual "test :trailing param"
 			}
@@ -52,6 +52,11 @@ class MessageSpec extends FunSpec with Matchers {
 			it("should render trailing parameters (beginning with colon) correctly") {
 				val msg = Message("test", ":trailing")
 				msg.toIrc shouldEqual "test ::trailing"
+			}
+
+			it("should render empty trailing parameters correctly") {
+				val msg = Message("test", "")
+				msg.toIrc shouldEqual "test :"
 			}
 
 			it("should render a command with middle and trailing parameters correctly") {
@@ -68,6 +73,13 @@ class MessageSpec extends FunSpec with Matchers {
 
 			it("should throw on middle parameters beginning with colons") {
 				val msg = Message("test", ":middle", "trailing")
+				intercept[IllegalArgumentException] {
+					msg.toIrc
+				}
+			}
+
+			it("should throw on empty middle parameters") {
+				val msg = Message("test", "", "trailing")
 				intercept[IllegalArgumentException] {
 					msg.toIrc
 				}
